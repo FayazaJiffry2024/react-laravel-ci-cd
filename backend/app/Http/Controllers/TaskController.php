@@ -16,7 +16,7 @@ class TaskController extends Controller
     // Create a new task
     public function store(Request $request)
     {
-        $request->validate([
+        $quest->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string'
         ]);
