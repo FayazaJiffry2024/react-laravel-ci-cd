@@ -11,5 +11,6 @@ use App\Http\Controllers\TaskController;
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']); */
 
-
+Route::patch('tasks/{id}/toggle', [TaskController::class, 'toggleComplete']);
 Route::apiResource('tasks', TaskController::class);
+
