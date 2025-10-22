@@ -1,0 +1,65 @@
+name: Laravel CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: task_tracker
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      # 1️⃣ Checkout your code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo, pdo_mysql, dom, fileinfo
+          coverage: none
+
+      # 3️⃣ Install Composer dependencies
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+
+      # 4️⃣ Copy .env.example to .env
+      - name: Copy .env
+        run: cp .env.example .env
+
+      # 5️⃣ Generate Laravel key
+      - name: Generate app key
+        run: php artisan key:generate
+
+      # 6️⃣ Run migrations
+      - name: Run migrations
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: task_tracker
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan migrate
+
+      # 7️⃣ Run tests (optional)
+      - name: Run tests
+        run: php artisan test
