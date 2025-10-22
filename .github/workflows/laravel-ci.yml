@@ -1,13 +1,13 @@
-name: Laravel CI/CD
+name: Laravel CI/CD Pipeline 🚀
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build-test:
     runs-on: ubuntu-latest
 
     services:
@@ -19,38 +19,44 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost"
+          --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
 
     steps:
-      # 1️⃣ Checkout your code
-      - name: Checkout code
+      - name: 🛒 Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup PHP
-      - name: Setup PHP
+      - name: ⚙️ Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, pdo, pdo_mysql, dom, fileinfo
+          extensions: mbstring, pdo, pdo_mysql, xml, ctype, json, bcmath
           coverage: none
 
-      # 3️⃣ Install Composer dependencies
-      - name: Install dependencies
-        run: composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+      - name: 📦 Install Composer dependencies
+        run: |
+          composer install --no-progress --no-suggest --prefer-dist
 
-      # 4️⃣ Copy .env.example to .env
-      - name: Copy .env
-        run: cp .env.example .env
+      - name: ⚡ Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan config:clear
+          php artisan cache:clear
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:RRl54JIknifPoBiGeQEhL1LvFgulvfTlGpTsHFbjTzE=
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: task_tracker
+          DB_USERNAME: root
+          DB_PASSWORD: root
 
-      # 5️⃣ Generate Laravel key
-      - name: Generate app key
-        run: php artisan key:generate
-
-      # 6️⃣ Run migrations
-      - name: Run migrations
+      - name: 🧱 Run database migrations
+        run: php artisan migrate --force
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
@@ -58,8 +64,6 @@ jobs:
           DB_DATABASE: task_tracker
           DB_USERNAME: root
           DB_PASSWORD: root
-        run: php artisan migrate
 
-      # 7️⃣ Run tests (optional)
-      - name: Run tests
+      - name: 🧪 Run Laravel tests
         run: php artisan test
