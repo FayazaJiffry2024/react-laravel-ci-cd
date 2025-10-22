@@ -37,7 +37,7 @@ jobs:
         working-directory: ./backend
         run: php artisan key:generate
 
-      # Step 6: Run migrations (optional if you have test DB setup)
+      # Step 6: Run migrations
       - name: Run migrations
         working-directory: ./backend
         run: php artisan migrate --force || echo "Skipping migrations (no DB setup)"
