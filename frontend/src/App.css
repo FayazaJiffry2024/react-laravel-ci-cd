@@ -1,42 +1,69 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* General container */
+.container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+  background-color: #f7f9fc;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Title */
+.title {
   text-align: center;
+  color: #007bff;
+  font-size: 2rem;
+  margin-bottom: 20px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Loading & no tasks text */
+.loading,
+.no-tasks {
+  text-align: center;
+  color: #555;
+  font-size: 1.1rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Task list */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Task item */
+.task-item {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
-.card {
-  padding: 2em;
+.task-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.read-the-docs {
-  color: #888;
+/* Completed / Pending badge */
+.completed {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background-color: #d4edda;
+  color: #155724;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.pending {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background-color: #fff3cd;
+  color: #856404;
+  border-radius: 12px;
+  font-size: 0.85rem;
 }
