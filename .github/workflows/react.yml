@@ -3,36 +3,40 @@ name: React Frontend CI
 on:
   push:
     branches: [ main ]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/react.yml"
   pull_request:
     branches: [ main ]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/react.yml"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout your repo
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Setup Node.js (use Node 20 for Vite)
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
 
+      # Step 3: Clean cache (optional, avoids Rolldown errors)
+      - name: Clean cache
+        working-directory: ./frontend
+        run: rm -rf node_modules package-lock.json
+
+      # Step 4: Go into frontend folder and install dependencies
       - name: Install dependencies
         working-directory: ./frontend
         run: npm install
 
+      # Step 5: Build React app
       - name: Build React app
         working-directory: ./frontend
         run: npm run build
 
+      # Step 6: Run tests
       - name: Run tests
         working-directory: ./frontend
         run: npm test -- --watchAll=false
