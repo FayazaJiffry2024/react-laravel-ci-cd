@@ -1,44 +1,29 @@
-.container {
-  max-width: 800px;
-  margin: 40px auto;
-  text-align: center;
-  font-family: "Poppins", sans-serif;
+body {
+  background-color: #f7f9fc;
 }
 
-.title {
-  margin-bottom: 20px;
+.card {
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.table {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+h2 {
+  font-weight: bold;
   color: #333;
 }
 
-.task-form {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+  transition: 0.3s;
 }
 
-.task-form input,
-.task-form button {
-  padding: 8px;
-  font-size: 14px;
-}
-
-.error {
-  color: red;
-  margin-bottom: 10px;
-}
-
-.task-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.task-table th,
-.task-table td {
-  border: 1px solid #ccc;
-  padding: 10px;
-}
-
-.task-table th {
-  background-color: #f4f4f4;
+.btn-primary:hover {
+  background-color: #0056b3;
 }

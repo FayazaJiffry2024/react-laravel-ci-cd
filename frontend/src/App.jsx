@@ -1,170 +1,201 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Swal from "sweetalert2"; // import SweetAlert2
 import "./App.css";
 
-const API_BASE = "http://127.0.0.1:8000/api";
-
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState(""); // you can use this for notes or date text
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  // ------------------------------
+  // React State variables
+  // ------------------------------
+  const [tasks, setTasks] = useState([]); // store all tasks
+  const [taskName, setTaskName] = useState(""); // store task name
+  const [taskDate, setTaskDate] = useState(""); // store task date
+  const [editingTaskId, setEditingTaskId] = useState(null); // store task id if editing
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  // ------------------------------
+  // Validation Functions
+  // ------------------------------
+  const isValidTaskName = (name) => /^[A-Za-z\s]+$/.test(name); // only letters and spaces allowed
+  const isValidDate = (date) => {
+    const today = new Date();
+    const selectedDate = new Date(date);
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    return selectedDate >= today; // date should not be in the past
+  };
 
-  async function fetchTasks() {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API_BASE}/tasks`);
-      setTasks(res.data);
-    } catch (err) {
-      console.error("fetchTasks error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  // ------------------------------
+  // SweetAlert Toast Notification
+  // ------------------------------
+  const notify = (title, icon = "success") => {
+    Swal.fire({
+      title,
+      icon,
+      timer: 1500,
+      showConfirmButton: false,
+      toast: true,
+      position: "top-end",
+    });
+  };
 
-  async function handleAdd(e) {
+  // ------------------------------
+  // Add or Update Task
+  // ------------------------------
+  const handleAddOrUpdateTask = (e) => {
     e.preventDefault();
-    setError("");
 
-    if (!title.trim()) {
-      setError("Title is required.");
-      return;
+    if (!taskName) return notify("Please enter a task name", "error");
+    if (!isValidTaskName(taskName))
+      return notify("Task name can only contain letters and spaces", "error");
+    if (!taskDate) return notify("Please select a date", "error");
+    if (!isValidDate(taskDate))
+      return notify("You cannot select a past date", "error");
+
+    if (editingTaskId) {
+      // update existing task
+      setTasks(
+        tasks.map((task) =>
+          task.id === editingTaskId
+            ? { ...task, name: taskName, date: taskDate }
+            : task
+        )
+      );
+      setEditingTaskId(null);
+      notify("Task updated successfully");
+    } else {
+      // add new task
+      const newTask = {
+        id: Date.now(),
+        name: taskName,
+        date: taskDate,
+        status: "Pending",
+      };
+      setTasks([...tasks, newTask]);
+      notify("Task added successfully");
     }
 
-    // backend expects 'title' and 'description' fields
-    const payload = {
-      title: title.trim(),
-      description: description.trim(),
-      // completed will default to false in DB if not provided; you can include completed: false
-    };
+    setTaskName("");
+    setTaskDate("");
+  };
 
-    try {
-      const res = await axios.post(`${API_BASE}/tasks`, payload);
-      // Important: your controller returns ['message','task'], so created task is res.data.task
-      const created = res.data.task ?? res.data; // fallback if controller changed
-      if (!created) {
-        console.warn("Unexpected create response:", res.data);
-      } else {
-        setTasks((prev) => [...prev, created]);
-      }
-      setTitle("");
-      setDescription("");
-    } catch (err) {
-      console.error("Add task failed:", err.response ?? err);
-      setError("Failed to add task. See console for details.");
+  // ------------------------------
+  // Edit, Delete, Toggle Status
+  // ------------------------------
+  const handleEdit = (task) => {
+    setTaskName(task.name);
+    setTaskDate(task.date);
+    setEditingTaskId(task.id);
+  };
+
+  const handleDelete = (taskId) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task.status !== "Completed") {
+      return notify("You can delete only completed tasks!", "error");
     }
-  }
+    setTasks(tasks.filter((t) => t.id !== taskId));
+    notify("Task deleted successfully");
+  };
 
-  async function handleToggle(task) {
-    try {
-      // you added Route::patch('tasks/{id}/toggle', ...) — use PATCH
-      const res = await axios.patch(`${API_BASE}/tasks/${task.id}/toggle`);
-      const updated = res.data.task ?? res.data;
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    } catch (err) {
-      console.error("Toggle failed:", err.response ?? err);
-    }
-  }
+  const toggleStatus = (taskId) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === taskId
+          ? { ...task, status: task.status === "Pending" ? "Completed" : "Pending" }
+          : task
+      )
+    );
+  };
 
-  async function handleEdit(task) {
-    // simple UI: prompt for new title & description
-    const newTitle = prompt("New title:", task.title);
-    if (newTitle === null) return; // cancelled
-    const newDesc = prompt("New description:", task.description ?? "");
-
-    try {
-      const res = await axios.put(`${API_BASE}/tasks/${task.id}`, {
-        title: newTitle,
-        description: newDesc,
-        completed: task.completed, // keep current completed value
-      });
-      const updated = res.data.task ?? res.data;
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    } catch (err) {
-      console.error("Update failed:", err.response ?? err);
-      alert("Update failed. Check console.");
-    }
-  }
-
-  async function handleDelete(task) {
-    if (!task.completed) {
-      alert("Only completed tasks can be deleted.");
-      return;
-    }
-    if (!confirm("Delete this completed task?")) return;
-
-    try {
-      await axios.delete(`${API_BASE}/tasks/${task.id}`);
-      setTasks((prev) => prev.filter((t) => t.id !== task.id));
-    } catch (err) {
-      console.error("Delete failed:", err.response ?? err);
-    }
-  }
-
+  // ------------------------------
+  // UI Design
+  // ------------------------------
   return (
-    <div className="container">
-      <h1>📋 Tasks</h1>
+    <div className="container mt-5">
+      <h1 className="text-center mb-4">Task Manager</h1>
 
-      <form onSubmit={handleAdd} className="form">
-        <input
-          placeholder="Task title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <input
-          placeholder="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <button type="submit">Add Task</button>
+      <form className="mb-4" onSubmit={handleAddOrUpdateTask}>
+        <div className="row g-2">
+          {/* Task Name Input */}
+          <div className="col-md-4">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Task Name"
+              value={taskName}
+              onChange={(e) => setTaskName(e.target.value)}
+            />
+          </div>
+
+          {/* Date Input with Label */}
+          <div className="col-md-3">
+            <label htmlFor="taskDate" className="form-label">
+              Select Date:
+            </label>
+            <input
+              id="taskDate"
+              type="date"
+              className="form-control"
+              value={taskDate}
+              onChange={(e) => setTaskDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]} // block past dates
+            />
+          </div>
+
+          {/* Add / Update Button */}
+          <div className="col-md-2 align-self-end">
+            <button type="submit" className="btn btn-primary w-100">
+              {editingTaskId ? "Update Task" : "Add Task"}
+            </button>
+          </div>
+        </div>
       </form>
 
-      {error && <div className="error">{error}</div>}
-
-      {loading ? (
-        <div>Loading tasks...</div>
-      ) : (
-        <table className="task-table">
-          <thead>
+      {/* Task Table */}
+      {tasks.length > 0 && (
+        <table className="table table-bordered table-striped">
+          <thead className="table-dark">
             <tr>
-              <th>Title</th>
-              <th>Description</th>
-              <th>Completed</th>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {tasks.length === 0 ? (
-              <tr>
-                <td colSpan="4">No tasks found.</td>
+            {tasks.map((task) => (
+              <tr key={task.id}>
+                <td>{task.name}</td>
+                <td>{task.date}</td>
+                <td>
+                  <span
+                    className={
+                      task.status === "Completed" ? "text-success" : "text-warning"
+                    }
+                    style={{ cursor: "pointer" }}
+                    onClick={() => toggleStatus(task.id)}
+                  >
+                    {task.status}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    className="btn btn-sm btn-info me-2"
+                    onClick={() => handleEdit(task)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleDelete(task.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
-            ) : (
-              tasks.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.title}</td>
-                  <td>{t.description}</td>
-                  <td>{t.completed ? "Yes" : "No"}</td>
-                  <td>
-                    <button onClick={() => handleToggle(t)}>
-                      {t.completed ? "Mark Pending" : "Mark Done"}
-                    </button>
-                    <button onClick={() => handleEdit(t)}>Edit</button>
-                    <button onClick={() => handleDelete(t)} disabled={!t.completed}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       )}
-      <p className="hint">Tip: open browser devtools → Network / Console to inspect requests & errors.</p>
     </div>
   );
 }
